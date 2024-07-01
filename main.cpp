@@ -52,12 +52,12 @@ class Board {
   }
 };
 
-
 //
-// Game Logic and Helper Functions
+//  Game Logic and Helper Functions
 //
 
 /** @brief returns whether column is a valid spot to move
+ *
  * @param board: current board
  * @param column: the column which needs to get checked
  */
@@ -66,6 +66,7 @@ bool isValidColumn(const Board& board, int column) {
 }
 
 /** @brief returns whether the given position is drawn
+ *
  * @param board: current board
  */
 bool isDrawn(const Board& board) {
@@ -75,6 +76,88 @@ bool isDrawn(const Board& board) {
     }
   }
   return true;
+}
+
+/** @brief checks any position on the board to see if it is within a four in a row
+ * 
+ * @param board: current board
+ * @param move: the players move to be checked
+ * @param i: the y position to be checked (0-ed)
+ * @param j: the x position to be checked (0-ed)
+ * 
+ */
+bool isFourInRow(const Board& board, bool move, int i, int j) {
+  // horizontal check (-)
+  int count = 0;
+  for (int x = std::max(j - 3, 0); x <= std::min(j + 3, WIDTH - 1); x++) {
+    if (board.mask[i][x] == 1 && board.side[i][x] == move) {
+      count++;
+      if (count >= 4) return true;
+    } else {
+      count = 0;
+    }
+  }
+
+  // vertical check (|)
+  count = 0;
+  for (int y = std::max(i - 3, 0); y <= std::min(i + 3, HEIGHT - 1); y++) {
+    if (board.mask[y][j] == 1 && board.side[y][j] == move) {
+      count++;
+      if (count >= 4) return true;
+    } else {
+      count = 0;
+    }
+  }
+
+    // diagonal check (\)
+  count = 0;
+  for (int x = -3; x <= 3; x++) {
+    int y = i + x;
+    int k = j + x;
+    if (y >= 0 && y < HEIGHT && k >= 0 && k < WIDTH) {
+      if (board.mask[y][k] == 1 && board.side[y][k] == move) {
+        count++;
+        if (count >= 4) return true;
+      } else {
+        count = 0;
+      }
+    }
+  }
+
+  // diagonal check (/)
+  count = 0;
+  for (int x = -3; x <= 3; x++) {
+    int y = i + x;
+    int k = j - x;
+    if (y >= 0 && y < HEIGHT && k >= 0 && k < WIDTH) {
+      if (board.mask[y][k] == 1 && board.side[y][k] == move) {
+        count++;
+        if (count >= 4) return true;
+      } else {
+        count = 0;
+      }
+    }
+  }
+
+  return false;
+}
+
+/** @brief sees if a position is won from a given players pieces
+ *
+ * @param board: current board
+ * @param move: players move to be checked
+ */
+bool isWon(const Board& board, bool move) {
+  for (int i = 0; i < HEIGHT; i++) {
+    for (int j = 0; j < WIDTH; j++) {
+      if (board.side[i][j] == move) {
+        if (isFourInRow(board, move, i, j)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
 
 /** @brief drops the current player's piece into the given column
@@ -110,7 +193,6 @@ Board makeMove(const Board& board, int column) {
   }
   return newBoard;
 }
-
 
 //
 //  Display Functions
@@ -167,17 +249,24 @@ void display(const Board& board) {
   std::cout << std::endl;
 }
 
-
 int main() {
   Board workingBoard;
   bool gameOver = false;
-  bool aiOnly = true;
+  bool aiOnly = false;
   bool userMove = 1;
   while (!gameOver) {
     display(workingBoard);
     if (isDrawn(workingBoard)) {
       gameOver = true;
       printf("%c[%dmGAME OVER: 1/2 - 1/2", 0x1B, 97);
+      break;
+    } else if (isWon(workingBoard, 0)) {
+      gameOver = true;
+      printf("%c[%dmGAME OVER: RED WON", 0x1B, 97);
+      break;
+    } else if (isWon(workingBoard, 1)) {
+      gameOver = true;
+      printf("%c[%dmGAME OVER: YELLOW WON", 0x1B, 97);
       break;
     }
     if (aiOnly) {
