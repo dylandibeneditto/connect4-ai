@@ -181,10 +181,8 @@ int main() {
       break;
     }
     if (aiOnly) {
-      workingBoard = makeMove(workingBoard, rand() % WIDTH);
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       workingBoard = makeMove(workingBoard, rand() % WIDTH);
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     } else {
       int move;
       printf("%c[%dm(enter your move): ", 0x1B, GRAY);
