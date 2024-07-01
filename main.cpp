@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
 #include <iostream>
+#include <thread>
 
 const int WIDTH = 7;
 const int HEIGHT = 6;
@@ -50,42 +52,10 @@ class Board {
   }
 };
 
-/// @brief clears the screen based on operating system
-void clear() {
-#ifdef WINDOWS
-  std::system("cls");
-#else
-  std::system("clear");
-#endif
-}
 
-/// @brief displays the board after clearing the screen
-/// @param board
-void display(const Board& board) {
-  clear();
-  for (int i = 0; i < HEIGHT; i++) {
-    printf("%c[%dm | ", 0x1B, BLUE);
-    for (int j = 0; j < WIDTH; j++) {
-      if (board.mask[i][j] == 1) {
-        if (board.side[i][j] == 0) {
-          printf("%c[%dmO", 0x1B, RED);
-        } else {
-          printf("%c[%dmO", 0x1B, YELLOW);
-        }
-      } else {
-        std::cout << " ";
-      }
-      printf("%c[%dm | ", 0x1B, BLUE);
-    }
-    std::cout << std::endl;
-  }
-
-  std::cout << " ";
-  for (int i = 1; i <= WIDTH; i++) {
-    printf("%c[%dm  %d ", 0x1B, GRAY, i);
-  }
-  std::cout << std::endl;
-}
+//
+// Game Logic and Helper Functions
+//
 
 /** @brief returns whether column is a valid spot to move
  * @param board: current board
@@ -122,12 +92,12 @@ Board makeMove(const Board& board, int column) {
   newBoard.move = 1 - board.move;
 
   // Copy the side array
-  for (int i = 0; i < HEIGHT; ++i) {
+  for (int i = 0; i < HEIGHT; i++) {
     std::copy(board.side[i], board.side[i] + WIDTH, newBoard.side[i]);
   }
 
   // Copy the mask array
-  for (int i = 0; i < HEIGHT; ++i) {
+  for (int i = 0; i < HEIGHT; i++) {
     std::copy(board.mask[i], board.mask[i] + WIDTH, newBoard.mask[i]);
   }
 
@@ -141,9 +111,68 @@ Board makeMove(const Board& board, int column) {
   return newBoard;
 }
 
+
+//
+//  Display Functions
+//
+
+/// @brief clears the screen based on operating system
+void clear() {
+#ifdef WINDOWS
+  std::system("cls");
+#else
+  std::system("clear");
+#endif
+}
+
+/// @brief gets the input for the next move
+/// @return 0-ed input provided by the user
+int getMove() {
+  int move;
+  std::cin >> move;
+  move -= 1;
+  if (move >= 0 && move < WIDTH) {
+    return move;
+  } else {
+    printf("%c[%dmInvalid move. Try again.\n", 0x1B, RED);
+  }
+  return -1;
+}
+
+/// @brief displays the board after clearing the screen
+/// @param board
+void display(const Board& board) {
+  clear();
+  for (int i = 0; i < HEIGHT; i++) {
+    printf("%c[%dm | ", 0x1B, BLUE);
+    for (int j = 0; j < WIDTH; j++) {
+      if (board.mask[i][j] == 1) {
+        if (board.side[i][j] == 0) {
+          printf("%c[%dmO", 0x1B, RED);
+        } else {
+          printf("%c[%dmO", 0x1B, YELLOW);
+        }
+      } else {
+        std::cout << " ";
+      }
+      printf("%c[%dm | ", 0x1B, BLUE);
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << " ";
+  for (int i = 1; i <= WIDTH; i++) {
+    printf("%c[%dm  %d ", 0x1B, GRAY, i);
+  }
+  std::cout << std::endl;
+}
+
+
 int main() {
   Board workingBoard;
   bool gameOver = false;
+  bool aiOnly = true;
+  bool userMove = 1;
   while (!gameOver) {
     display(workingBoard);
     if (isDrawn(workingBoard)) {
@@ -151,15 +180,22 @@ int main() {
       printf("%c[%dmGAME OVER: 1/2 - 1/2", 0x1B, 97);
       break;
     }
-    int move;
-    printf("%c[%dm(enter your move): ", 0x1B, GRAY);
-    printf("%c[%dm", 0x1B, 97);  // reset to white for input
-    std::cin >> move;
-    move -= 1;
-    if (move >= 0 && move < WIDTH) {
-      workingBoard = makeMove(workingBoard, move);
+    if (aiOnly) {
+      workingBoard = makeMove(workingBoard, rand() % WIDTH);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      workingBoard = makeMove(workingBoard, rand() % WIDTH);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     } else {
-      printf("%c[%dmInvalid move. Try again.\n", 0x1B, RED);
+      int move;
+      printf("%c[%dm(enter your move): ", 0x1B, GRAY);
+      printf("%c[%dm", 0x1B, 97);  // reset to white for input
+      if (userMove == 0) {
+        workingBoard = makeMove(workingBoard, getMove());
+        workingBoard = makeMove(workingBoard, rand() % WIDTH);
+      } else {
+        workingBoard = makeMove(workingBoard, rand() % WIDTH);
+        workingBoard = makeMove(workingBoard, getMove());
+      }
     }
   }
   return 0;
