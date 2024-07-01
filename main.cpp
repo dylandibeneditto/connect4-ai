@@ -218,8 +218,8 @@ int getMove() {
     return move;
   } else {
     printf("%c[%dmInvalid move. Try again.\n", 0x1B, RED);
+    return -1;
   }
-  return -1;
 }
 
 /// @brief displays the board after clearing the screen
@@ -253,10 +253,10 @@ void display(const Board& board) {
 int main() {
   Board workingBoard;
   bool gameOver = false;
-  bool aiOnly = false;
-  bool userMove = 1;
-  if (userMove == 1) {  // when ai makes first move
-    workingBoard = makeMove(workingBoard, rand() % WIDTH);
+  bool aiOnly = true;
+  bool userMove = 0;
+  if (!aiOnly && userMove == 1) {  // when ai makes first move
+    workingBoard = makeMove(workingBoard, rand() * WIDTH);
   }
   while (!gameOver) {
     display(workingBoard);
@@ -274,14 +274,17 @@ int main() {
       break;
     }
     if (aiOnly) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      // std::this_thread::sleep_for(std::chrono::milliseconds(20));
       workingBoard = makeMove(workingBoard, rand() % WIDTH);
     } else {
       int move;
       printf("%c[%dm(enter your move): ", 0x1B, GRAY);
       printf("%c[%dm", 0x1B, 97);  // reset to white for input
-      workingBoard = makeMove(workingBoard, getMove());
-      workingBoard = makeMove(workingBoard, rand() % WIDTH);
+      move = getMove();
+      if (move > -1) {
+        workingBoard = makeMove(workingBoard, move);
+        workingBoard = makeMove(workingBoard, rand() % WIDTH);
+      }
     }
   }
   return 0;
