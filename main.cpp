@@ -78,13 +78,14 @@ bool isDrawn(const Board& board) {
   return true;
 }
 
-/** @brief checks any position on the board to see if it is within a four in a row
- * 
+/** @brief checks any position on the board to see if it is within a four in a
+ * row
+ *
  * @param board: current board
  * @param move: the players move to be checked
  * @param i: the y position to be checked (0-ed)
  * @param j: the x position to be checked (0-ed)
- * 
+ *
  */
 bool isFourInRow(const Board& board, bool move, int i, int j) {
   // horizontal check (-)
@@ -109,7 +110,7 @@ bool isFourInRow(const Board& board, bool move, int i, int j) {
     }
   }
 
-    // diagonal check (\)
+  // diagonal check (\)
   count = 0;
   for (int x = -3; x <= 3; x++) {
     int y = i + x;
@@ -254,11 +255,14 @@ int main() {
   bool gameOver = false;
   bool aiOnly = false;
   bool userMove = 1;
+  if (userMove == 1) {  // when ai makes first move
+    workingBoard = makeMove(workingBoard, rand() % WIDTH);
+  }
   while (!gameOver) {
     display(workingBoard);
     if (isDrawn(workingBoard)) {
       gameOver = true;
-      printf("%c[%dmGAME OVER: 1/2 - 1/2", 0x1B, 97);
+      printf("%c[%dmGAME OVER: DRAW", 0x1B, 97);
       break;
     } else if (isWon(workingBoard, 0)) {
       gameOver = true;
@@ -276,13 +280,8 @@ int main() {
       int move;
       printf("%c[%dm(enter your move): ", 0x1B, GRAY);
       printf("%c[%dm", 0x1B, 97);  // reset to white for input
-      if (userMove == 0) {
-        workingBoard = makeMove(workingBoard, getMove());
-        workingBoard = makeMove(workingBoard, rand() % WIDTH);
-      } else {
-        workingBoard = makeMove(workingBoard, rand() % WIDTH);
-        workingBoard = makeMove(workingBoard, getMove());
-      }
+      workingBoard = makeMove(workingBoard, getMove());
+      workingBoard = makeMove(workingBoard, rand() % WIDTH);
     }
   }
   return 0;
