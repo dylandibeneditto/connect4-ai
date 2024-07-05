@@ -209,12 +209,13 @@ void clear() {
 }
 
 /// @brief gets the input for the next move
+/// @param board: current board
 /// @return 0-ed input provided by the user
-int getMove() {
+int getMove(const Board& board) {
   int move;
   std::cin >> move;
   move -= 1;
-  if (move >= 0 && move < WIDTH) {
+  if (move >= 0 && move < WIDTH && isValidColumn(board, move)) {
     return move;
   } else {
     printf("%c[%dmInvalid move. Try again.\n", 0x1B, RED);
@@ -223,7 +224,7 @@ int getMove() {
 }
 
 /// @brief displays the board after clearing the screen
-/// @param board
+/// @param board: current board
 void display(const Board& board) {
   clear();
   for (int i = 0; i < HEIGHT; i++) {
@@ -253,7 +254,7 @@ void display(const Board& board) {
 int main() {
   Board workingBoard;
   bool gameOver = false;
-  bool aiOnly = true;
+  bool aiOnly = false;
   bool userMove = 0;
   if (!aiOnly && userMove == 1) {  // when ai makes first move
     workingBoard = makeMove(workingBoard, rand() * WIDTH);
@@ -280,7 +281,7 @@ int main() {
       int move;
       printf("%c[%dm(enter your move): ", 0x1B, GRAY);
       printf("%c[%dm", 0x1B, 97);  // reset to white for input
-      move = getMove();
+      move = getMove(workingBoard);
       if (move > -1) {
         workingBoard = makeMove(workingBoard, move);
         workingBoard = makeMove(workingBoard, rand() % WIDTH);
