@@ -78,6 +78,67 @@ bool isDrawn(const Board& board) {
   return true;
 }
 
+int largestLine(const Board& board, bool move, int i, int j) {
+  int result = 0;
+  // horizontal check (-)
+  int count = 0;
+  for (int x = std::max(j - 3, 0); x <= std::min(j + 3, WIDTH - 1); x++) {
+    if (board.mask[i][x] == 1 && board.side[i][x] == move) {
+      count++;
+    } else {
+      count = 0;
+    }
+  }
+
+  result = std::max(result, count);
+
+  // vertical check (|)
+  count = 0;
+  for (int y = std::max(i - 3, 0); y <= std::min(i + 3, HEIGHT - 1); y++) {
+    if (board.mask[y][j] == 1 && board.side[y][j] == move) {
+      count++;
+    } else {
+      count = 0;
+    }
+  }
+
+  result = std::max(result, count);
+
+  // diagonal check (\)
+  count = 0;
+  for (int x = -3; x <= 3; x++) {
+    int y = i + x;
+    int k = j + x;
+    if (y >= 0 && y < HEIGHT && k >= 0 && k < WIDTH) {
+      if (board.mask[y][k] == 1 && board.side[y][k] == move) {
+        count++;
+      } else {
+        count = 0;
+      }
+    }
+  }
+
+  result = std::max(result, count);
+
+  // diagonal check (/)
+  count = 0;
+  for (int x = -3; x <= 3; x++) {
+    int y = i + x;
+    int k = j - x;
+    if (y >= 0 && y < HEIGHT && k >= 0 && k < WIDTH) {
+      if (board.mask[y][k] == 1 && board.side[y][k] == move) {
+        count++;
+      } else {
+        count = 0;
+      }
+    }
+  }
+
+  result = std::max(result, count);
+
+  return result;
+}
+
 /** @brief checks any position on the board to see if it is within a four in a
  * row
  *
@@ -88,59 +149,11 @@ bool isDrawn(const Board& board) {
  *
  */
 bool isFourInRow(const Board& board, bool move, int i, int j) {
-  // horizontal check (-)
-  int count = 0;
-  for (int x = std::max(j - 3, 0); x <= std::min(j + 3, WIDTH - 1); x++) {
-    if (board.mask[i][x] == 1 && board.side[i][x] == move) {
-      count++;
-      if (count >= 4) return true;
-    } else {
-      count = 0;
-    }
+  if (largestLine(board, move, i, j) >= 4) {
+    return true;
+  } else {
+    return false;
   }
-
-  // vertical check (|)
-  count = 0;
-  for (int y = std::max(i - 3, 0); y <= std::min(i + 3, HEIGHT - 1); y++) {
-    if (board.mask[y][j] == 1 && board.side[y][j] == move) {
-      count++;
-      if (count >= 4) return true;
-    } else {
-      count = 0;
-    }
-  }
-
-  // diagonal check (\)
-  count = 0;
-  for (int x = -3; x <= 3; x++) {
-    int y = i + x;
-    int k = j + x;
-    if (y >= 0 && y < HEIGHT && k >= 0 && k < WIDTH) {
-      if (board.mask[y][k] == 1 && board.side[y][k] == move) {
-        count++;
-        if (count >= 4) return true;
-      } else {
-        count = 0;
-      }
-    }
-  }
-
-  // diagonal check (/)
-  count = 0;
-  for (int x = -3; x <= 3; x++) {
-    int y = i + x;
-    int k = j - x;
-    if (y >= 0 && y < HEIGHT && k >= 0 && k < WIDTH) {
-      if (board.mask[y][k] == 1 && board.side[y][k] == move) {
-        count++;
-        if (count >= 4) return true;
-      } else {
-        count = 0;
-      }
-    }
-  }
-
-  return false;
 }
 
 /** @brief sees if a position is won from a given players pieces
@@ -193,6 +206,80 @@ Board makeMove(const Board& board, int column) {
     }
   }
   return newBoard;
+}
+
+//
+//  AI Functions
+//
+
+int heuristic(const Board& board, bool move) {
+  int result = 0;
+  for (int i = 0; i < HEIGHT; i++) {
+    for (int j = 0; j < WIDTH; j++) {
+      if (board.side[i][j] == move) {
+        result += largestLine(board, move, i, j);
+      }
+    }
+  }
+  return result;
+}
+
+int minimax(Board board, int depth, bool maximizingPlayer, int alpha,
+            int beta) {
+  if (isWon(board, maximizingPlayer)) {
+    return -10000;
+  } else if (isDrawn(board)) {
+    return 0;
+  }
+  if (depth == 0) {
+    return heuristic(board, maximizingPlayer);
+  }
+
+  if (maximizingPlayer) {
+    int maxEval = -10000;
+    for (int col = 0; col < WIDTH; col++) {
+      if (isValidColumn(board, col)) {
+        Board newBoard = makeMove(board, col);
+        int eval = minimax(newBoard, depth - 1, false, alpha, beta);
+        maxEval = std::max(maxEval, eval);
+        alpha = std::max(alpha, eval);
+        if (beta <= alpha) {
+          break;
+        }
+      }
+    }
+    return maxEval;
+  } else {
+    int minEval = 10000;
+    for (int col = 0; col < WIDTH; col++) {
+      if (isValidColumn(board, col)) {
+        Board newBoard = makeMove(board, col);
+        int eval = minimax(newBoard, depth - 1, true, alpha, beta);
+        minEval = std::min(minEval, eval);
+        beta = std::min(beta, eval);
+        if (beta <= alpha) {
+          break;
+        }
+      }
+    }
+    return minEval;
+  }
+}
+
+int findBestMove(Board board, int depth) {
+  int bestMove = -1;
+  int bestValue = -10000;
+  for (int col = 0; col < WIDTH; col++) {
+    if (isValidColumn(board, col)) {
+      Board newBoard = makeMove(board, col);
+      int boardValue = minimax(newBoard, depth - 1, false, -10000, 10000);
+      if (boardValue > bestValue) {
+        bestValue = boardValue;
+        bestMove = col;
+      }
+    }
+  }
+  return bestMove;
 }
 
 //
@@ -256,9 +343,11 @@ int main() {
   bool gameOver = false;
   bool aiOnly = false;
   bool userMove = 0;
-  if (!aiOnly && userMove == 1) {  // when ai makes first move
-    workingBoard = makeMove(workingBoard, rand() * WIDTH);
+
+  if (!aiOnly && userMove == 1) {  // when AI makes the first move
+    workingBoard = makeMove(workingBoard, rand() % WIDTH);
   }
+
   while (!gameOver) {
     display(workingBoard);
     if (isDrawn(workingBoard)) {
@@ -274,9 +363,9 @@ int main() {
       printf("%c[%dmGAME OVER: YELLOW WON", 0x1B, 97);
       break;
     }
+
     if (aiOnly) {
-      // std::this_thread::sleep_for(std::chrono::milliseconds(20));
-      workingBoard = makeMove(workingBoard, rand() % WIDTH);
+      workingBoard = makeMove(workingBoard, findBestMove(workingBoard, 5));
     } else {
       int move;
       printf("%c[%dm(enter your move): ", 0x1B, GRAY);
@@ -284,9 +373,12 @@ int main() {
       move = getMove(workingBoard);
       if (move > -1) {
         workingBoard = makeMove(workingBoard, move);
-        workingBoard = makeMove(workingBoard, rand() % WIDTH);
+        if (!isWon(workingBoard, 0) && !isDrawn(workingBoard)) {
+          workingBoard = makeMove(workingBoard, findBestMove(workingBoard, 10));
+        }
       }
     }
   }
+
   return 0;
 }
