@@ -149,11 +149,7 @@ int largestLine(const Board& board, bool move, int i, int j) {
  *
  */
 bool isFourInRow(const Board& board, bool move, int i, int j) {
-  if (largestLine(board, move, i, j) >= 4) {
-    return true;
-  } else {
-    return false;
-  }
+  return largestLine(board, move, i, j) >= 4;
 }
 
 /** @brief sees if a position is won from a given players pieces
@@ -164,10 +160,8 @@ bool isFourInRow(const Board& board, bool move, int i, int j) {
 bool isWon(const Board& board, bool move) {
   for (int i = 0; i < HEIGHT; i++) {
     for (int j = 0; j < WIDTH; j++) {
-      if (board.side[i][j] == move) {
-        if (isFourInRow(board, move, i, j)) {
-          return true;
-        }
+      if (board.side[i][j] == move && isFourInRow(board, move, i, j)) {
+        return true;
       }
     }
   }
@@ -201,7 +195,7 @@ Board makeMove(const Board& board, int column) {
   for (int i = HEIGHT - 1; i >= 0; i--) {
     if (!newBoard.mask[i][column]) {
       newBoard.mask[i][column] = 1;
-      newBoard.side[i][column] = newBoard.move;
+      newBoard.side[i][column] = board.move;
       break;
     }
   }
@@ -226,13 +220,14 @@ int heuristic(const Board& board, bool move) {
 
 int minimax(Board board, int depth, bool maximizingPlayer, int alpha,
             int beta) {
-  if (isWon(board, maximizingPlayer)) {
-    return -10000;
+  bool currentMove = maximizingPlayer ? board.move : 1 - board.move;
+  if (isWon(board, 1 - currentMove)) {
+    return maximizingPlayer ? -10000 : 10000;
   } else if (isDrawn(board)) {
     return 0;
   }
   if (depth == 0) {
-    return heuristic(board, maximizingPlayer);
+    return heuristic(board, board.move);
   }
 
   if (maximizingPlayer) {
@@ -276,6 +271,15 @@ int findBestMove(Board board, int depth) {
       if (boardValue > bestValue) {
         bestValue = boardValue;
         bestMove = col;
+      }
+    }
+  }
+  if (bestMove ==
+      -1) {  // if no best move was found, choose the first valid column
+    for (int col = 0; col < WIDTH; col++) {
+      if (isValidColumn(board, col)) {
+        bestMove = col;
+        break;
       }
     }
   }
@@ -341,7 +345,7 @@ void display(const Board& board) {
 int main() {
   Board workingBoard;
   bool gameOver = false;
-  bool aiOnly = false;
+  bool aiOnly = true;
   bool userMove = 0;
 
   if (!aiOnly && userMove == 1) {  // when AI makes the first move
@@ -363,9 +367,8 @@ int main() {
       printf("%c[%dmGAME OVER: YELLOW WON", 0x1B, 97);
       break;
     }
-
     if (aiOnly) {
-      workingBoard = makeMove(workingBoard, findBestMove(workingBoard, 5));
+      workingBoard = makeMove(workingBoard, findBestMove(workingBoard, 8));
     } else {
       int move;
       printf("%c[%dm(enter your move): ", 0x1B, GRAY);
@@ -374,11 +377,10 @@ int main() {
       if (move > -1) {
         workingBoard = makeMove(workingBoard, move);
         if (!isWon(workingBoard, 0) && !isDrawn(workingBoard)) {
-          workingBoard = makeMove(workingBoard, findBestMove(workingBoard, 10));
+          workingBoard = makeMove(workingBoard, findBestMove(workingBoard, 8));
         }
       }
     }
   }
-
   return 0;
 }
