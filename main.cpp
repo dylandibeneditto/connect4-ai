@@ -1,14 +1,13 @@
-// main.cpp
 #include <iostream>
 #include "terminal.h"
+#include "board.h"
 
 int main() {
     enableRawMode();
     atexit(disableRawMode);
 
     int position = 3;
-
-    std::cout << "Use arrow keys to move left/right. Press space to 'drop'. Press q to quit.\n";
+    Board board;
 
     bool running = true;
     while (running) {
@@ -23,15 +22,16 @@ int main() {
         }
         std::cout << "\n";
 
-        // Draw column numbers
-        for (int i = 0; i < 7; ++i)
-            std::cout << "  " << i << "  ";
-        std::cout << "\n";
-
-        // Dummy board
-        for (int row = 0; row < 6; ++row) {
-            for (int col = 0; col < 7; ++col) {
-                std::cout << "|   |";
+        for (int row = 0; row < 6; row++) {
+            for (int col = 0; col < 7; col++) {
+                Board::Tile tile = board.getTile(row, col);
+                if (tile == Board::Tile::EMPTY) {
+                    std::cout << "|   |";
+                } else if (tile == Board::Tile::RED) {
+                    std::cout << "| R |";
+                } else if (tile == Board::Tile::YELLOW) {
+                    std::cout << "| Y |";
+                }
             }
             std::cout << "\n";
         }
@@ -45,7 +45,7 @@ int main() {
             if (position < 6) position++;
         } else if (key == " ") {
             std::cout << "Dropping in column " << position << "\n";
-
+            board.dropTile(position);
         }
     }
 
