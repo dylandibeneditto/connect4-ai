@@ -16,7 +16,16 @@ class Board {
         YELLOW
     };
 
+    enum class TerminalState {
+        IN_PROGRESS,
+        RED_WON,
+        YELLOW_WON,
+        DRAW
+    };
+
     Tile getTile(int row, int col) const;
+
+    TerminalState terminal();
     
     void dropTile(int col);
 };
