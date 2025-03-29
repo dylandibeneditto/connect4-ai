@@ -32,6 +32,104 @@ void printGameBoard(Board board, int position, bool player) {
     printf("%c[%dm", 0x1B, 39);
 }
 
+void getFourInRow(Board board, int tiles[4][2], Board::TerminalState state) {
+    for (int row = 0; row < 6; row++) {
+        for (int col = 0; col < 7; col++) {
+            Board::Tile tile = board.getTile(row, col);
+            if ((state == Board::TerminalState::RED_WON && tile == Board::Tile::RED) ||
+                (state == Board::TerminalState::YELLOW_WON && tile == Board::Tile::YELLOW)) {
+                
+                // Check horizontal
+                if (col + 3 < 7 &&
+                    board.getTile(row, col + 1) == tile &&
+                    board.getTile(row, col + 2) == tile &&
+                    board.getTile(row, col + 3) == tile) {
+                    tiles[0][0] = row; tiles[0][1] = col;
+                    tiles[1][0] = row; tiles[1][1] = col + 1;
+                    tiles[2][0] = row; tiles[2][1] = col + 2;
+                    tiles[3][0] = row; tiles[3][1] = col + 3;
+                    return;
+                }
+
+                // Check vertical
+                if (row + 3 < 6 &&
+                    board.getTile(row + 1, col) == tile &&
+                    board.getTile(row + 2, col) == tile &&
+                    board.getTile(row + 3, col) == tile) {
+                    tiles[0][0] = row; tiles[0][1] = col;
+                    tiles[1][0] = row + 1; tiles[1][1] = col;
+                    tiles[2][0] = row + 2; tiles[2][1] = col;
+                    tiles[3][0] = row + 3; tiles[3][1] = col;
+                    return;
+                }
+
+                // Check diagonal (bottom-left to top-right)
+                if (row - 3 >= 0 && col + 3 < 7 &&
+                    board.getTile(row - 1, col + 1) == tile &&
+                    board.getTile(row - 2, col + 2) == tile &&
+                    board.getTile(row - 3, col + 3) == tile) {
+                    tiles[0][0] = row; tiles[0][1] = col;
+                    tiles[1][0] = row - 1; tiles[1][1] = col + 1;
+                    tiles[2][0] = row - 2; tiles[2][1] = col + 2;
+                    tiles[3][0] = row - 3; tiles[3][1] = col + 3;
+                    return;
+                }
+
+                // Check diagonal (top-left to bottom-right)
+                if (row + 3 < 6 && col + 3 < 7 &&
+                    board.getTile(row + 1, col + 1) == tile &&
+                    board.getTile(row + 2, col + 2) == tile &&
+                    board.getTile(row + 3, col + 3) == tile) {
+                    tiles[0][0] = row; tiles[0][1] = col;
+                    tiles[1][0] = row + 1; tiles[1][1] = col + 1;
+                    tiles[2][0] = row + 2; tiles[2][1] = col + 2;
+                    tiles[3][0] = row + 3; tiles[3][1] = col + 3;
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void printFinalBoard(Board board, Board::TerminalState state) {
+
+    int tiles[4][2] = {{0,0}, {0,0}, {0,0}, {0,0}};
+
+    getFourInRow(board, tiles, state);
+
+    for (int row = 0; row < 6; row++) {
+        for (int col = 0; col < 7; col++) {
+            int background = (state == Board::TerminalState::DRAW) ? 100 : 40;
+
+            for(auto& i : tiles) {
+                if(row == i[0] && col == i[1]) {
+                    background = 100;
+                    break;
+                }
+            }
+
+            Board::Tile tile = board.getTile(row, col);
+
+            printf("\x1b[%dm|", 34);
+
+            if (tile == Board::Tile::EMPTY) {
+                printf("   ");
+            } else if (tile == Board::Tile::RED) {
+                printf("\x1b[%d;%dm O ", 31, background);
+            } else if (tile == Board::Tile::YELLOW) {
+                printf("\x1b[%d;%dm O ", 33, background);
+            }
+
+            printf("\x1b[0m");
+        }
+
+        printf("\x1b[34m|\n");
+        printf("\x1b[0m");
+    }
+
+    printf("\x1b[0m");
+}
+
 void printBoard(Board board) {
     for (int row = 0; row < 6; row++) {
         for (int col = 0; col < 7; col++) {
@@ -199,7 +297,7 @@ int main() {
             continue;
         }
         clearScreen();
-        printBoard(board);
+        printFinalBoard(board, state);
         if(state == Board::TerminalState::DRAW) {
             std::cout << "It's a draw\n";
             break;
