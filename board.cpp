@@ -120,17 +120,21 @@ int pointScore(int player, int opponent, int empty) {
 }
 
 int Board::heuristic() {
+    static const int dRow[] = {0, 1, -1, 1};
+    static const int dCol[] = {1, 0, 1, 1};
+
     int score = 0;
-    for(int row = 0; row < HEIGHT; row++) {
-        for(int col = 0; col < WIDTH; col++) {
 
-            const int dRow[] = {0, 1, -1, 1};
-            const int dCol[] = {1, 0, 1, 1};
-
+    for (int row = 0; row < HEIGHT; row++) {
+        for (int col = 0; col < WIDTH; col++) {
             for (int d = 0; d < 4; d++) {
-                int yellow = 0;
-                int red = 0;
-                int empty = 0;
+                int endRow = row + 3 * dRow[d];
+                int endCol = col + 3 * dCol[d];
+
+                if (endRow < 0 || endRow >= HEIGHT || endCol < 0 || endCol >= WIDTH)
+                    continue;
+
+                int yellow = 0, red = 0, empty = 0;
 
                 for (int i = 0; i < 4; i++) {
                     int r = row + i * dRow[d];
@@ -140,11 +144,13 @@ int Board::heuristic() {
                     else if (cell == Tile::YELLOW) yellow++;
                     else if (cell == Tile::EMPTY) empty++;
                 }
+
+                if (yellow > 0 && red > 0) continue;
                 score += pointScore(yellow, red, empty);
             }
-
         }
     }
+
     return score;
 }
 
