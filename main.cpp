@@ -24,9 +24,9 @@ void printBoard(Board board) {
 int minimax(Board board, int depth, int alpha, int beta, bool maximizing) {
     Board::TerminalState state = board.terminal();
     if (state == Board::TerminalState::RED_WON) {
-        return 100000 - depth;
-    } else if (state == Board::TerminalState::YELLOW_WON) {
         return -100000 + depth;
+    } else if (state == Board::TerminalState::YELLOW_WON) {
+        return 100000 - depth;
     } else if (state == Board::TerminalState::DRAW) {
         return 0;
     }
@@ -66,7 +66,7 @@ int minimax(Board board, int depth, int alpha, int beta, bool maximizing) {
     }
 }
 
-int findBestMove(Board board, int depth, bool player) {
+int findBestMove(Board board, int depth) {
     int bestMove = -1;
     int bestValue = -100000;
 
@@ -74,7 +74,7 @@ int findBestMove(Board board, int depth, bool player) {
         if (board.validMove(col)) {
             Board boardCopy = Board(board);
             boardCopy.dropTile(col);
-            int moveValue = minimax(boardCopy, depth - 1, -100000, 100000, player);
+            int moveValue = minimax(boardCopy, depth - 1, -100000, 100000, false);
             if (moveValue > bestValue) {
                 bestValue = moveValue;
                 bestMove = col;
@@ -92,7 +92,28 @@ int main() {
     Board board;
 
     bool running = true;
-    bool player = 1;
+    bool player = 0;
+
+    bool pregame = true;
+
+    while(pregame) {
+        moveCursorToTop();
+        clearScreen();
+        std::cout << "Welcome to Connect 4\n";
+        std::cout << "Use arrow keys to move, press space to select, or 'q' to quit.\n";
+        std::cout << (!player ? " > " : "   ") << "RED (first move)\n";
+        std::cout << (player ? " > " : "   ") << "YELLOW (second move)\n";
+        std::string key = getKeyInput();
+        if (key == " ") {
+            pregame = false;
+        } else if (key == "UP") {
+            player = 0;
+        } else if (key == "DOWN") {
+            player = 1;
+        } else if (key == "q") {
+            return 0;
+        }
+    }
 
     if(player) {
         board.dropTile(3); // 3 has been proven to be the best move
@@ -125,7 +146,7 @@ int main() {
         } else if (key == " ") {
             if(board.validMove(position)) {
                 board.dropTile(position);
-                board.dropTile(findBestMove(board, 9, player));
+                board.dropTile(findBestMove(board, 9));
             }
         }
 
