@@ -5,15 +5,15 @@ static const unsigned int WIDTH = 7;
 static const unsigned int HEIGHT = 6;
 
 Board::Board() {
-    red = 0;
-    yellow = 0;
-    move = true;
+    this->red = 0;
+    this->yellow = 0;
+    this->move = true;
 }
 
 Board::Board(Board &b) {
-    red = b.red;
-    yellow = b.yellow;
-    move = b.move;
+    this->red = b.red;
+    this->yellow = b.yellow;
+    this->move = b.move;
 }
 
 Board::Board(uint64_t red, uint64_t yellow, bool move) {
@@ -108,13 +108,13 @@ Board::TerminalState Board::terminal() {
 
 int pointScore(int player, int opponent, int empty) {
     if (player == 3 && empty == 1) {
-        return -10;
+        return 100;
     } else if (player == 2 && empty == 2) {
-        return -2;
+        return 50;
     } else if (opponent == 3 && empty == 1) {
-        return 4;
+        return -80;
     } else if (opponent == 2 && empty == 2) {
-        return 1;
+        return -30;
     }
     return 0;
 }

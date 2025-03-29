@@ -24,9 +24,9 @@ void printBoard(Board board) {
 int minimax(Board board, int depth, int alpha, int beta, bool maximizing) {
     Board::TerminalState state = board.terminal();
     if (state == Board::TerminalState::RED_WON) {
-        return -100000 + depth;
+        return -99000 - depth;
     } else if (state == Board::TerminalState::YELLOW_WON) {
-        return 100000 - depth;
+        return 99000 + depth;
     } else if (state == Board::TerminalState::DRAW) {
         return 0;
     }
@@ -66,22 +66,42 @@ int minimax(Board board, int depth, int alpha, int beta, bool maximizing) {
     }
 }
 
-int findBestMove(Board board, int depth) {
-    int bestMove = -1;
-    int bestValue = -100000;
+int findBestMove(Board board, int depth, bool player) {
+    if(!player) {
+        int bestMove = -1;
+        int bestValue = -100000;
 
-    for (int col = 0; col < 7; col++) {
-        if (board.validMove(col)) {
-            Board boardCopy = Board(board);
-            boardCopy.dropTile(col);
-            int moveValue = minimax(boardCopy, depth - 1, -100000, 100000, false);
-            if (moveValue > bestValue) {
-                bestValue = moveValue;
-                bestMove = col;
+        for (int col = 0; col < 7; col++) {
+            if (board.validMove(col)) {
+                Board boardCopy = Board(board);
+                boardCopy.dropTile(col);
+                int moveValue = minimax(boardCopy, depth - 1, -1000000, 1000000, player);
+                std::cout << moveValue << "\n\b";
+                if (moveValue > bestValue) {
+                    bestValue = moveValue;
+                    bestMove = col;
+                }
             }
         }
+        return bestMove;
+    } else {
+        int bestMove = -1;
+        int bestValue = 100000;
+
+        for (int col = 0; col < 7; col++) {
+            if (board.validMove(col)) {
+                Board boardCopy = Board(board);
+                boardCopy.dropTile(col);
+                int moveValue = minimax(boardCopy, depth - 1, -1000000, 1000000, player);
+                std::cout << moveValue << "\n\b";
+                if (moveValue < bestValue) {
+                    bestValue = moveValue;
+                    bestMove = col;
+                }
+            }
+        }
+        return bestMove;
     }
-    return bestMove;
 }
 
 int main() {
@@ -146,7 +166,7 @@ int main() {
         } else if (key == " ") {
             if(board.validMove(position)) {
                 board.dropTile(position);
-                board.dropTile(findBestMove(board, 9));
+                board.dropTile(findBestMove(board, 9, player));
             }
         }
 
