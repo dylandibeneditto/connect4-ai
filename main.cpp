@@ -2,6 +2,36 @@
 #include "terminal.h"
 #include "board.h"
 
+void printGameBoard(Board board, int position, bool player) {
+    for (int row = 0; row < 7; row++) {
+        for (int col = 0; col < 7; col++) {
+            if (row == 0) {
+                if (col == position)
+                    printf("  %c[%dmO ", 0x1B, player ? 93 : 91);
+                else
+                    std::cout << "    ";
+                continue;
+            }
+
+            Board::Tile tile = board.getTile(row-1, col);
+            printf("%c[%dm|", 0x1B, 34);
+            if (tile == Board::Tile::EMPTY) {
+                if (col == position && (row == 6 || board.getTile(std::min(6,row), col) != Board::Tile::EMPTY))
+                    printf(" %c[%dmO ", 0x1B, player ? 33 : 31);
+                else
+                    std::cout << "   ";
+            } else if (tile == Board::Tile::RED) {
+                printf("%c[%dm O ", 0x1B, 91);
+            } else if (tile == Board::Tile::YELLOW) {
+                printf("%c[%dm O ", 0x1B, 93);
+            }
+        }
+        printf("%c[%dm%s\n", 0x1B, 34, row == 0 ? "" : "|");
+
+    }
+    printf("%c[%dm", 0x1B, 39);
+}
+
 void printBoard(Board board) {
     for (int row = 0; row < 6; row++) {
         for (int col = 0; col < 7; col++) {
@@ -76,7 +106,6 @@ int findBestMove(Board board, int depth, bool player) {
                 Board boardCopy = Board(board);
                 boardCopy.dropTile(col);
                 int moveValue = minimax(boardCopy, depth - 1, -1000000, 1000000, player);
-                std::cout << moveValue << "\n\b";
                 if (moveValue > bestValue) {
                     bestValue = moveValue;
                     bestMove = col;
@@ -121,8 +150,10 @@ int main() {
         clearScreen();
         std::cout << "Welcome to Connect 4\n";
         std::cout << "Use arrow keys to move, press space to select, or 'q' to quit.\n";
-        std::cout << (!player ? " > " : "   ") << "RED (first move)\n";
-        std::cout << (player ? " > " : "   ") << "YELLOW (second move)\n";
+        printf("%s%c[%dmRED\t\t%c[%dm(first move)\n", (!player ? " > " : "   "), 0x1B, 31, 0x1B, 30);
+        printf("%c[%dm", 0x1B, 39);
+        printf("%s%c[%dmYELLOW\t%c[%dm(second move)\n", (player ? " > " : "   "), 0x1B, 33, 0x1B, 30);
+        printf("%c[%dm", 0x1B, 39);
         std::string key = getKeyInput();
         if (key == " ") {
             pregame = false;
@@ -144,15 +175,7 @@ int main() {
         moveCursorToTop();
         clearScreen();
 
-        for (int i = 0; i < 7; i++) {
-            if (i == position)
-                printf("  %c[%dmO ", 0x1B, player ? 33 : 31);
-            else
-                std::cout << "    ";
-        }
-        std::cout << "\n";
-
-        printBoard(board);
+        printGameBoard(board, position, player);
         std::cout << "Use arrow keys to move, space to drop, and 'q' to quit.\n";
 
 
