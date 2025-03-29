@@ -92,7 +92,11 @@ int main() {
     Board board;
 
     bool running = true;
-    bool player = 0;
+    bool player = 1;
+
+    if(player) {
+        board.dropTile(3); // 3 has been proven to be the best move
+    }
 
     while (running) {
 
@@ -101,7 +105,7 @@ int main() {
 
         for (int i = 0; i < 7; i++) {
             if (i == position)
-                printf("  %c[%dmO ", 0x1B, player ? 31 : 33);
+                printf("  %c[%dmO ", 0x1B, player ? 33 : 31);
             else
                 std::cout << "    ";
         }
@@ -120,15 +124,8 @@ int main() {
             if (position < 6) position++;
         } else if (key == " ") {
             if(board.validMove(position)) {
-                if(player) {
-                    board.dropTile(findBestMove(board, 9, player));
-                }
-
                 board.dropTile(position);
-
-                if(!player) {
-                    board.dropTile(findBestMove(board, 9, player));
-                }
+                board.dropTile(findBestMove(board, 9, player));
             }
         }
 

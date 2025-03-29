@@ -7,7 +7,7 @@ static const unsigned int HEIGHT = 6;
 Board::Board() {
     red = 0;
     yellow = 0;
-    move = false;
+    move = true;
 }
 
 Board::Board(Board &b) {
