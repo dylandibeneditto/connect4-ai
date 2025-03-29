@@ -6,19 +6,22 @@ void printBoard(Board board) {
     for (int row = 0; row < 6; row++) {
         for (int col = 0; col < 7; col++) {
             Board::Tile tile = board.getTile(row, col);
+            printf("%c[%dm|", 0x1B, 34);
             if (tile == Board::Tile::EMPTY) {
-                std::cout << "|   ";
+                std::cout << "   ";
             } else if (tile == Board::Tile::RED) {
-                std::cout << "| R ";
+                printf("%c[%dm O ", 0x1B, 31);
             } else if (tile == Board::Tile::YELLOW) {
-                std::cout << "| Y ";
+                printf("%c[%dm O ", 0x1B, 33);
             }
         }
-        std::cout << "|\n";
+        printf("%c[%dm|\n", 0x1B, 34);
+
     }
+    printf("%c[%dm", 0x1B, 39);
 }
 
-int minimax(Board board, int depth, bool maximizing) {
+int minimax(Board board, int depth, int alpha, int beta, bool maximizing) {
     Board::TerminalState state = board.terminal();
     if (state == Board::TerminalState::RED_WON) {
         return 100000 - depth;
@@ -38,8 +41,11 @@ int minimax(Board board, int depth, bool maximizing) {
             if (board.validMove(col)) {
                 Board boardCopy = Board(board);
                 boardCopy.dropTile(col);
-                int eval = minimax(boardCopy, depth - 1, false);
+                int eval = minimax(boardCopy, depth - 1, alpha, beta, false);
                 maxEval = std::max(maxEval, eval);
+                if(maxEval > beta)
+                    break;
+                alpha = std::max(alpha, maxEval);
             }
         }
         return maxEval;
@@ -49,8 +55,11 @@ int minimax(Board board, int depth, bool maximizing) {
             if (board.validMove(col)) {
                 Board boardCopy = Board(board);
                 boardCopy.dropTile(col);
-                int eval = minimax(boardCopy, depth - 1, true);
+                int eval = minimax(boardCopy, depth - 1, alpha, beta, true);
                 minEval = std::min(minEval, eval);
+                if(minEval < alpha)
+                    break;
+                beta = std::min(beta, minEval);
             }
         }
         return minEval;
@@ -65,7 +74,7 @@ int findBestMove(Board board, int depth, bool player) {
         if (board.validMove(col)) {
             Board boardCopy = Board(board);
             boardCopy.dropTile(col);
-            int moveValue = minimax(boardCopy, depth - 1, player);
+            int moveValue = minimax(boardCopy, depth - 1, -100000, 100000, player);
             if (moveValue > bestValue) {
                 bestValue = moveValue;
                 bestMove = col;
@@ -92,7 +101,7 @@ int main() {
 
         for (int i = 0; i < 7; i++) {
             if (i == position)
-                std::cout << "  v ";
+                printf("  %c[%dmO ", 0x1B, player ? 31 : 33);
             else
                 std::cout << "    ";
         }
@@ -112,13 +121,13 @@ int main() {
         } else if (key == " ") {
             if(board.validMove(position)) {
                 if(player) {
-                    board.dropTile(findBestMove(board, 7, player));
+                    board.dropTile(findBestMove(board, 9, player));
                 }
 
                 board.dropTile(position);
 
                 if(!player) {
-                    board.dropTile(findBestMove(board, 7, player));
+                    board.dropTile(findBestMove(board, 9, player));
                 }
             }
         }
