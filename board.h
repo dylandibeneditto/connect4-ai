@@ -5,11 +5,18 @@
 
 class Board {
     private:
-    uint64_t red = 0;
-    uint64_t yellow = 0;
-    bool move = false;
+    uint64_t red;
+    uint64_t yellow;
+    bool move;
 
     public:
+
+    Board();
+
+    Board(Board &b);
+
+    Board(uint64_t red, uint64_t yellow, bool move);
+
     enum class Tile {
         EMPTY,
         RED,
@@ -26,6 +33,10 @@ class Board {
     Tile getTile(int row, int col) const;
 
     TerminalState terminal();
+
+    int heuristic();
+
+    bool validMove(int col) const;
     
     void dropTile(int col);
 };

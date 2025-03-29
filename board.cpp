@@ -4,6 +4,24 @@
 static const unsigned int WIDTH = 7;
 static const unsigned int HEIGHT = 6;
 
+Board::Board() {
+    red = 0;
+    yellow = 0;
+    move = false;
+}
+
+Board::Board(Board &b) {
+    red = b.red;
+    yellow = b.yellow;
+    move = b.move;
+}
+
+Board::Board(uint64_t red, uint64_t yellow, bool move) {
+    this->red = red;
+    this->yellow = yellow;
+    this->move = move;
+}
+
 Board::Tile Board::getTile(int row, int col) const {
     int index = row * WIDTH + col;
     if ((red >> index) & 1) {
@@ -20,19 +38,19 @@ Board::TerminalState Board::terminal() {
         return TerminalState::DRAW;
     }
 
-    for(int row = 0; row < WIDTH; row++) {
-        for(int col = 0; col < HEIGHT; col++) {
+    for(int row = 0; row < HEIGHT; row++) {
+        for(int col = 0; col < WIDTH; col++) {
             int index = row * WIDTH + col;
             if ((red >> index) & 1) {
                 // check horizontal
-                if (col + 3 < HEIGHT && ((red >> (row * WIDTH + col)) & 1) &&
+                if (col + 3 < WIDTH && ((red >> (row * WIDTH + col)) & 1) &&
                     ((red >> (row * WIDTH + col + 1)) & 1) &&
                     ((red >> (row * WIDTH + col + 2)) & 1) &&
                     ((red >> (row * WIDTH + col + 3)) & 1)) {
                     return TerminalState::RED_WON;
                 }
                 // check vertical
-                if (row + 3 < WIDTH && ((red >> index) & 1) &&
+                if (row + 3 < HEIGHT && ((red >> index) & 1) &&
                     ((red >> ((row + 1) * WIDTH + col)) & 1) &&
                     ((red >> ((row + 2) * WIDTH + col)) & 1) &&
                     ((red >> ((row + 3) * WIDTH + col)) & 1)) {
@@ -46,7 +64,7 @@ Board::TerminalState Board::terminal() {
                     return TerminalState::RED_WON;
                 }
                 // check diagonal
-                if (col + 3 < HEIGHT && row + 3 < WIDTH && ((red >> index) & 1) &&
+                if (col + 3 < WIDTH && row + 3 < WIDTH && ((red >> index) & 1) &&
                     ((red >> ((row + 1) * WIDTH + col + 1)) & 1) &&
                     ((red >> ((row + 2) * WIDTH + col + 2)) & 1) &&
                     ((red >> ((row + 3) * WIDTH + col + 3)) & 1)) {
@@ -54,14 +72,14 @@ Board::TerminalState Board::terminal() {
                 }
             } else if((yellow >> index) & 1){
                 // check horizontal
-                if (col + 3 < HEIGHT && ((yellow >> (row * WIDTH + col)) & 1) &&
+                if (col + 3 < WIDTH && ((yellow >> (row * WIDTH + col)) & 1) &&
                     ((yellow >> (row * WIDTH + col + 1)) & 1) &&
                     ((yellow >> (row * WIDTH + col + 2)) & 1) &&
                     ((yellow >> (row * WIDTH + col + 3)) & 1)) {
                     return TerminalState::YELLOW_WON;
                 }
                 // check vertical
-                if (row + 3 < WIDTH && ((yellow >> index) & 1) &&
+                if (row + 3 < HEIGHT && ((yellow >> index) & 1) &&
                     ((yellow >> ((row + 1) * WIDTH + col)) & 1) &&
                     ((yellow >> ((row + 2) * WIDTH + col)) & 1) &&
                     ((yellow >> ((row + 3) * WIDTH + col)) & 1)) {
@@ -75,7 +93,7 @@ Board::TerminalState Board::terminal() {
                     return TerminalState::YELLOW_WON;
                 }
                 // check diagonal
-                if (col + 3 < HEIGHT && row + 3 < WIDTH && ((yellow >> index) & 1) &&
+                if (col + 3 < WIDTH && row + 3 < HEIGHT && ((yellow >> index) & 1) &&
                     ((yellow >> ((row + 1) * WIDTH + col + 1)) & 1) &&
                     ((yellow >> ((row + 2) * WIDTH + col + 2)) & 1) &&
                     ((yellow >> ((row + 3) * WIDTH + col + 3)) & 1)) {
@@ -88,7 +106,52 @@ Board::TerminalState Board::terminal() {
     return TerminalState::IN_PROGRESS;
 }
 
-// Implement the dropTile method
+int pointScore(int player, int opponent, int empty) {
+    if (player == 3 && empty == 1) {
+        return -10;
+    } else if (player == 2 && empty == 2) {
+        return -2;
+    } else if (opponent == 3 && empty == 1) {
+        return 4;
+    } else if (opponent == 2 && empty == 2) {
+        return 1;
+    }
+    return 0;
+}
+
+int Board::heuristic() {
+    int score = 0;
+    for(int row = 0; row < HEIGHT; row++) {
+        for(int col = 0; col < WIDTH; col++) {
+
+            const int dRow[] = {0, 1, -1, 1};
+            const int dCol[] = {1, 0, 1, 1};
+
+            for (int d = 0; d < 4; d++) {
+                int yellow = 0;
+                int red = 0;
+                int empty = 0;
+
+                for (int i = 0; i < 4; i++) {
+                    int r = row + i * dRow[d];
+                    int c = col + i * dCol[d];
+                    Tile cell = getTile(r, c);
+                    if (cell == Tile::RED) red++;
+                    else if (cell == Tile::YELLOW) yellow++;
+                    else if (cell == Tile::EMPTY) empty++;
+                }
+                score += pointScore(yellow, red, empty);
+            }
+
+        }
+    }
+    return score;
+}
+
+bool Board::validMove(int col) const {
+    return !(((red >> col) | (yellow >> col)) & 1);
+}
+
 void Board::dropTile(int col) {
     if (col < 0 || col >= WIDTH) {
         return;
