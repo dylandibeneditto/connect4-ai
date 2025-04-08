@@ -115,9 +115,9 @@ void printFinalBoard(Board board, Board::TerminalState state) {
             if (tile == Board::Tile::EMPTY) {
                 printf("   ");
             } else if (tile == Board::Tile::RED) {
-                printf("\x1b[%d;%dm O ", 31, background);
+                printf("\x1b[%d;%dm O ", 91, background);
             } else if (tile == Board::Tile::YELLOW) {
-                printf("\x1b[%d;%dm O ", 33, background);
+                printf("\x1b[%d;%dm O ", 93, background);
             }
 
             printf("\x1b[0m");
@@ -220,7 +220,6 @@ int findBestMove(Board board, int depth, bool player) {
                 Board boardCopy = Board(board);
                 boardCopy.dropTile(col);
                 int moveValue = minimax(boardCopy, depth - 1, -1000000, 1000000, player);
-                std::cout << moveValue << "\n\b";
                 if (moveValue < bestValue) {
                     bestValue = moveValue;
                     bestMove = col;
@@ -287,27 +286,32 @@ int main() {
         } else if (key == " ") {
             if(board.validMove(position)) {
                 board.dropTile(position);
+
+                Board::TerminalState state = board.terminal();
+                if(state != Board::TerminalState::IN_PROGRESS) {
+                    break;
+                }
+
                 board.dropTile(findBestMove(board, 9, player));
             }
         }
 
-
         Board::TerminalState state = board.terminal();
-        if(state == Board::TerminalState::IN_PROGRESS) {
-            continue;
-        }
-        clearScreen();
-        printFinalBoard(board, state);
-        if(state == Board::TerminalState::DRAW) {
-            std::cout << "It's a draw\n";
-            break;
-        } else if(state == Board::TerminalState::RED_WON) {
-            std::cout << "Red wins\n";
-            break;
-        } else if(state == Board::TerminalState::YELLOW_WON) {
-            std::cout << "Yellow wins\n";
+        if(state != Board::TerminalState::IN_PROGRESS) {
             break;
         }
+    }
+
+
+    Board::TerminalState state = board.terminal();
+    clearScreen();
+    printFinalBoard(board, state);
+    if(state == Board::TerminalState::DRAW) {
+        std::cout << "It's a draw\n";
+    } else if(state == Board::TerminalState::RED_WON) {
+        std::cout << "Red wins\n";
+    } else if(state == Board::TerminalState::YELLOW_WON) {
+        std::cout << "Yellow wins\n";
     }
 
     return 0;
